@@ -24,7 +24,7 @@ jobs:
       - name: Run tests with coverage
         env:
           JWT_SECRET_KEY: ci-test-secret
-          DATABASE_URL: sqlite+aiosqlite:///:memory:
+          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
           OPENAI_API_KEY: sk-test
         run: pytest --cov=app --cov-report=term-missing
 
