@@ -1,8 +1,9 @@
+import json
 import uuid
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 # --- Auth ---
@@ -82,6 +83,17 @@ class ChatMessageOut(BaseModel):
     citations: List[dict] = []
     created_at: datetime
     model_config = {"from_attributes": True}
+
+    @field_validator("citations", mode="before")
+    @classmethod
+    def _decode_citations(cls, v):
+        # The DB column stores citations as a JSON-encoded string; decode it
+        # here so model_validate() works directly on ChatMessage rows.
+        if v is None:
+            return []
+        if isinstance(v, str):
+            return json.loads(v or "[]")
+        return v
 
 
 class ChatMessageCreate(BaseModel):

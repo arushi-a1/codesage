@@ -48,12 +48,7 @@ async def list_messages(session_id: uuid.UUID, db: AsyncSession = Depends(get_db
     result = await db.scalars(
         select(ChatMessage).where(ChatMessage.session_id == session.id).order_by(ChatMessage.created_at)
     )
-    messages = []
-    for m in result.all():
-        out = ChatMessageOut.model_validate(m)
-        out.citations = json.loads(m.citations or "[]")
-        messages.append(out)
-    return messages
+    return [ChatMessageOut.model_validate(m) for m in result.all()]
 
 
 async def _get_owned_session(session_id: uuid.UUID, db: AsyncSession, user: User) -> ChatSession:

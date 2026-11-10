@@ -12,10 +12,10 @@ from __future__ import annotations
 
 import json
 import logging
+import operator
 from typing import Annotated, List, Optional, TypedDict
 
 from langgraph.graph import END, StateGraph
-from langgraph.graph.message import add_messages
 
 from app.core.config import get_settings
 from app.services.agents.tools import TOOL_SPECS, RepoToolContext
@@ -68,7 +68,12 @@ MODE_SYSTEM_PROMPTS = {
 
 
 class AgentState(TypedDict):
-    messages: Annotated[list, add_messages]
+    # Plain list concatenation, NOT langgraph's `add_messages`: add_messages
+    # converts OpenAI-style dicts into LangChain message objects, which made
+    # every `isinstance(m, dict)` check below fail and silently disabled the
+    # tool loop (the agent never executed a single tool call). Keeping the
+    # state as raw OpenAI-format dicts end to end avoids that conversion.
+    messages: Annotated[list, operator.add]
     mode: str
     iterations: int
 
@@ -118,8 +123,8 @@ async def build_agent_step(tool_ctx: RepoToolContext):
 
 
 def _to_openai_message(m: dict) -> dict:
-    # LangGraph's add_messages can store either raw dicts or BaseMessage
-    # objects depending on how they were added; normalize to dict here.
+    # State holds raw OpenAI-format dicts (see AgentState); the object branch
+    # below is only a defensive fallback.
     if isinstance(m, dict):
         return m
     role = getattr(m, "type", "user")

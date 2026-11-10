@@ -51,9 +51,13 @@ Table auto-creation is dev-only. For a real deployment:
 
 ```bash
 cd backend
-alembic revision --autogenerate -m "init"
 alembic upgrade head
 ```
+
+The initial schema ships as `alembic/versions/0001_initial_schema.py`.
+After changing a model, generate a new revision with
+`alembic revision --autogenerate -m "describe change"`, review it (enum
+types and data migrations usually need hand edits), and commit it.
 
 Set `ENVIRONMENT=production` in `.env` so the app doesn't also try
 `create_all` on startup.
